@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livingston Power Solution - Shop & Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#0A4A7A;--yellow:#FFC107;--bg:#f5f7fa;--green:#16a34a;--red:#dc2626}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{background:var(--bg)} header{background:white;padding:12px 4%;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px #0001;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--blue);font-size:20px;cursor:pointer}
+.logo img{width:45px;height:45px;object-fit:contain;border-radius:8px;background:#eee}
+.nav{display:flex;gap:15px}.nav button{background:none;border:none;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:20px}
+.nav button.active,.nav button:hover{background:var(--blue);color:white}
+.btn{background:var(--yellow);border:none;padding:10px 20px;border-radius:25px;font-weight:700;cursor:pointer}
+.btn-blue{background:var(--blue);color:white}
+.container{padding:20px 4%}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.card{background:white;border-radius:15px;overflow:hidden;box-shadow:0 5px 15px #0001;position:relative}
+.card img.main{width:100%;height:200px;object-fit:cover}
+.card.info{padding:15px}.badge{position:absolute;top:10px;left:10px;background:var(--red);color:white;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.price{font-weight:700;color:var(--blue);font-size:18px}.old{color:#999;text-decoration:line-through;font-size:14px;margin-left:6px}
+.stars{color:var(--yellow)}.hidden{display:none!important}
+.dashboard{ display:grid; grid-template-columns:250px 1fr; min-height:90vh}
+.sidebar{background:var(--blue);color:white;padding:20px}.sidebar button{width:100%;text-align:left;background:none;border:none;color:white;padding:12px;margin:4px 0;border-radius:8px;cursor:pointer}
+.sidebar button.active,.sidebar button:hover{background:#ffffff22}
+.dash-content{padding:25px;overflow:auto}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px}
+.kpi div{background:white;padding:20px;border-radius:12px;box-shadow:0 3px 10px #0001}
+.kpi h3{font-size:28px;color:var(--blue)}
+input,select,textarea{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.thumbs img{width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid var(--blue)}
+.order-card{background:white;padding:15px;border-radius:10px;margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" onclick="showPage('shop')"><img id="logoImg" src="https://via.placeholder.com/100x100?text=LPS"><span id="logoText">LIVINGSTON POWER</span></div>
+  <div class="nav">
+    <button onclick="showPage('shop')" id="n-shop" class="active">Shop</button>
+    <button onclick="showPage('products')" id="n-prod">Products</button>
+    <button onclick="showPage('systems')" id="n-sys">Systems</button>
+    <button onclick="showPage('cart')">Cart (<span id="cartCount">0</span>)</button>
+    <button onclick="showPage('myorders')">My Orders</button>
+    <button onclick="openDashboard()">Dashboard</button>
+    <button onclick="showPage('account')" id="accBtn">Login</button>
+  </div>
+</header>
+
+<!-- SHOP PAGE -->
+<div id="page-shop" class="container">
+  <h2>Welcome to Livingston Power Solution</h2>
+  <p>Call: 0788269256 | WhatsApp: 0757143114 | Order now, get order number instantly!</p><br>
+  <input type="text" id="search" placeholder="Search pump, cable, contactor..." oninput="renderShop()">
+  <br><br><div class="grid" id="shopGrid"></div>
+</div>
+
+<div id="page-products" class="container hidden"><h2>All Products</h2><br><div class="grid" id="prodGrid"></div></div>
+<div id="page-systems" class="container hidden"><h2>Complete Systems</h2><br><div class="grid" id="sysGrid"></div></div>
+<div id="page-cart" class="container hidden"><h2>Your Cart</h2><br><div id="cartList"></div><br><h3 id="cartTotal"></h3><br><button class="btn btn-blue" onclick="checkout()">Place Order & Get Order Number</button></div>
+<div id="page-myorders" class="container hidden"><h2>My Orders</h2><br><div id="myOrdersList"></div></div>
+<div id="page-account" class="container hidden">
+  <div style="max-width:400px;margin:auto;background:white;padding:30px;border-radius:15px">
+    <h2 id="authTitle">Create Account / Login</h2><br>
+    <input id="a_name" placeholder="Full Name"><input id="a_phone" placeholder="Phone 07..."><input id="a_pass" type="password" placeholder="Password">
+    <button class="btn btn-blue" style="width:100%;margin-top:10px" onclick="createAccount()">Create Account & Login</button>
+    <p style="margin-top:15px;font-size:13px">Your shopping account saves orders with order numbers. We use local storage.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="hidden">
+  <div class="dashboard">
+    <div class="sidebar">
+      <h3>Admin Dashboard</h3><br>
+      <button onclick="dashTab('overview')" class="active" id="d-over">Overview</button>
+      <button onclick="dashTab('orders')" id="d-ord">Orders</button>
+      <button onclick="dashTab('products')" id="d-prod">Manage Products</button>
+      <button onclick="dashTab('settings')" id="d-set">Settings & Logo</button>
+      <button onclick="showPage('shop')" style="margin-top:30px;background:var(--yellow);color:black">← Back to Shop</button>
+    </div>
+    <div class="dash-content">
+      <div id="dash-overview">
+        <h2>Business Overview</h2><br>
+        <div class="kpi">
+          <div><p>Total Profit</p><h3 id="k-profit">UGX 0</h3></div>
+          <div><p>Ongoing Orders</p><h3 id="k-ongo">0</h3></div>
+          <div><p>Successful</p><h3 id="k-succ" style="color:var(--green)">0</h3></div>
+          <div><p>Failed / Cancelled</p><h3 id="k-fail" style="color:var(--red)">0</h3></div>
+        </div>
+        <div style="background:white;padding:20px;border-radius:12px"><canvas id="profitChart"></canvas></div>
+      </div>
+      <div id="dash-orders" class="hidden"><h2>All Customer Orders</h2><p>You can change status: Ongoing → Success / Failed</p><br><div id="allOrdersList"></div></div>
+      <div id="dash-products" class="hidden">
+        <h2>Add / Edit Product</h2><br>
+        <div style="background:white;padding:20px;border-radius:12px">
+          <input id="p_name" placeholder="Product Name e.g. Water Pump 1HP"><input id="p_price" type="number" placeholder="Price UGX e.g. 850000"><input id="p_discount" type="number" placeholder="Discount % e.g. 10"><input id="p_cat" placeholder="Category: products or systems"><input id="p_rating" type="number" placeholder="Rating 1-5 e.g. 4.5" step="0.1" max="5"><textarea id="p_desc" placeholder="Description"></textarea>
+          <label>Upload 2+ Photos:</label><input type="file" id="p_images" multiple accept="image/*" onchange="previewImages(event)"><div class="thumbs" id="imgPreview"></div>
+          <button class="btn btn-blue" style="width:100%;margin-top:10px" onclick="saveProduct()">Save Product</button>
+        </div><br><div id="adminProdList"></div>
+      </div>
+      <div id="dash-settings" class="hidden">
+        <h2>Settings - Edit Logo & Contacts</h2><br>
+        <div style="background:white;padding:20px;border-radius:12px">
+          <label>Upload Your Logo:</label><input type="file" accept="image/*" onchange="uploadLogo(event)">
+          <label>Company Name:</label><input id="s_name" value="LIVINGSTON POWER SOLUTION">
+          <label>Call Number:</label><input id="s_call" value="0788269256"><label>WhatsApp Number:</label><input id="s_what" value="0757143114">
+          <button class="btn btn-blue" style="width:100%;margin-top:15px" onclick="saveSettings()">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// DATA - localStorage
+let products = JSON.parse(localStorage.getItem('lps_products')) || [
+  {id:1,name:"Water Pump 1HP Single Phase",price:850000,discount:5,cat:"products",rating:4.8,desc:"Original pump for domestic",images:["https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=600","https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600"]},
+  {id:2,name:"Magnetic Contactor 40A",price:85000,discount:0,cat:"products",rating:4.6,desc:"For automatic control",images:["https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600","https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=600"]},
+  {id:3,name:"Complete Auto Pump Control Panel System",price:2415000,discount:10,cat:"systems",rating:5,desc:"Full system with enclosure, MCB 63A, float switch, labour",images:["https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600","https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=600"]}
+];
+let cart = JSON.parse(localStorage.getItem('lps_cart')) || [];
+let orders = JSON.parse(localStorage.getItem('lps_orders')) || [];
+let currentUser = JSON.parse(localStorage.getItem('lps_user')) || null;
+let tempImages = [];
+
+function saveAll(){localStorage.setItem('lps_products',JSON.stringify(products));localStorage.setItem('lps_cart',JSON.stringify(cart));localStorage.setItem('lps_orders',JSON.stringify(orders));}
+
+function showPage(p){
+  document.querySelectorAll('[id^=page-]').forEach(e=>e.classList.add('hidden'));
+  document.getElementById('page-'+p).classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  let btn=document.getElementById('n-'+(p=='shop'?'shop':p=='products'?'prod':p=='systems'?'sys':'')); if(btn) btn.classList.add('active');
+  if(p=='shop'||p=='products'||p=='systems') renderShop();
+  if(p=='cart') renderCart(); if(p=='myorders') renderMyOrders();
+  updateAccBtn();
+}
+function updateAccBtn(){document.getElementById('accBtn').innerText=currentUser?currentUser.name.split(' ')[0]:'Login'; document.getElementById('cartCount').innerText=cart.length;}
+
+function cardHTML(pr){
+  let newPrice = pr.discount? pr.price*(1-pr.discount/100): pr.price;
+  let stars='★'.repeat(Math.floor(pr.rating)) + (pr.rating%1>=0.5?'½':'');
+  return `<div class="card">
+    ${pr.discount?`<div class="badge">-${pr.discount}% OFF</div>`:''}
+    <img class="main" src="${pr.images[0]}"><div style="display:flex;gap:4px;padding:6px">${pr.images.map(im=>`<img src="${im}" style="width:40px;height:30px;object-fit:cover;border-radius:4px">`).join('')}</div>
+    <div class="info"><h4>${pr.name}</h4><p style="font-size:12px;color:#666">${pr.desc}</p><div class="stars">${stars} ${pr.rating}</div>
+    <div><span class="price">UGX ${newPrice.toLocaleString()}</span>${pr.discount?`<span class="old">UGX ${pr.price.toLocaleString()}</span>`:''}</div>
+    <button class="btn btn-blue" style="width:100%;margin-top:10px" onclick="addToCart(${pr.id})">Add to Order</button></div></div>`;
+}
+function renderShop(){
+  let s=document.getElementById('search')?document.getElementById('search').value.toLowerCase():'';
+  let f=products.filter(p=>p.name.toLowerCase().includes(s));
+  document.getElementById('shopGrid').innerHTML=f.map(cardHTML).join('');
+  document.getElementById('prodGrid').innerHTML=products.filter(p=>p.cat=='products').map(cardHTML).join('');
+  document.getElementById('sysGrid').innerHTML=products.filter(p=>p.cat=='systems').map(cardHTML).join('');
+}
+function addToCart(id){ let pr=products.find(p=>p.id==id); cart.push(pr); saveAll(); updateAccBtn(); alert(pr.name+' added to cart'); }
+function renderCart(){
+  let total=0; document.getElementById('cartList').innerHTML=cart.map((c,i)=>{
+    let price=c.discount? c.price*(1-c.discount/100):c.price; total+=price;
+    return `<div class="order-card"><span>${c.name}</span><span>UGX ${price.toLocaleString()} <button onclick="removeCart(${i})">❌</button></span></div>`}).join('');
+  document.getElementById('cartTotal').innerText='Total: UGX '+total.toLocaleString();
+}
+function removeCart(i){cart.splice(i,1); saveAll(); renderCart(); updateAccBtn();}
+function checkout(){
+  if(!currentUser){alert('Please create account first'); showPage('account'); return;}
+  if(cart.length==0){alert('Cart empty'); return;}
+  let total=cart.reduce((s,c)=>s+(c.discount?c.price*(1-c.discount/100):c.price),0);
+  let orderNo='LPS-'+Math.floor(1000+Math.random()*9000);
+  let order={id:Date.now(),orderNo,items:[...cart],total,customer:currentUser,status:'ongoing',date:new Date().toLocaleDateString()};
+  orders.push(order); cart=[]; saveAll(); alert('Order Placed! Your Order Number is: '+orderNo); showPage('myorders');
+}
+function renderMyOrders(){
+  let my=orders.filter(o=>currentUser && o.customer.phone==currentUser.phone);
+  document.getElementById('myOrdersList').innerHTML=my.length==0?'No orders yet':my.map(o=>`<div class="order-card"><div><b>${o.orderNo}</b> - ${o.status.toUpperCase()}<br>${o.items.length} items - UGX ${o.total.toLocaleString()}<br>${o.date}</div></div>`).join('');
+}
+function createAccount(){
+  let name=document.getElementById('a_name').value, phone=document.getElementById('a_phone').value, pass=document.getElementById('a_pass').value;
+  if(!name||!phone||!pass){alert('Fill all');return;}
+  currentUser={name,phone,pass}; localStorage.setItem('lps_user',JSON.stringify(currentUser)); alert('Account created! Welcome '+name); showPage('shop');
+}
+function openDashboard(){ let p=prompt('Enter Admin Password (admin123):'); if(p=='admin123'){ document.querySelectorAll('[id^=page-]').forEach(e=>e.classList.add('hidden')); document.getElementById('page-dashboard').classList.remove('hidden'); dashTab('overview'); loadDashboard(); } else if(p) alert('Wrong password'); }
+function dashTab(t){ document.querySelectorAll('[id^=dash-]').forEach(e=>e.classList.add('hidden')); document.getElementById('dash-'+t).classList.remove('hidden'); document.querySelectorAll('.sidebar button').forEach(b=>b.classList.remove('active')); document.getElementById('d-'+(t=='overview'?'over':t=='orders'?'ord':t=='products'?'prod':'set')).classList.add('active'); if(t=='orders') renderAllOrders(); if(t=='products') renderAdminProds(); }
+function loadDashboard(){
+  let ongoing=orders.filter(o=>o.status=='ongoing').length, succ=orders.filter(o=>o.status=='success').length, fail=orders.filter(o=>o.status=='failed').length;
+  let profit=orders.filter(o=>o.status=='success').reduce((s,o)=>s+o.total*0.2,0);
+  document.getElementById('k-ongo').innerText=ongoing; document.getElementById('k-succ').innerText=succ; document.getElementById('k-fail').innerText=fail; document.getElementById('k-profit').innerText='UGX '+profit.toLocaleString();
+  let ctx=document.getElementById('profitChart').getContext('2d');
+  new Chart(ctx,{type:'line',data:{labels:orders.map(o=>o.orderNo),datasets:[{label:'Profit (20% of order)',data:orders.map(o=>o.status=='success'?o.total*0.2:0),borderColor:'#0A4A7A',backgroundColor:'#FFC107',tension:0.4}]}});
+}
+function renderAllOrders(){
+  document.getElementById('allOrdersList').innerHTML=orders.map(o=>`<div class="order-card"><div><b>${o.orderNo}</b> - ${o.customer.name} (${o.customer.phone})<br>UGX ${o.total.toLocaleString()} - ${o.date}<br>Status: <b>${o.status}</b></div><div><select onchange="updateStatus(${o.id},this.value)"><option value="ongoing" ${o.status=='ongoing'?'selected':''}>Ongoing</option><option value="success" ${o.status=='success'?'selected':''}>Success</option><option value="failed" ${o.status=='failed'?'selected':''}>Failed</option></select></div></div>`).join('')||'No orders';
+}
+function updateStatus(id,val){ let o=orders.find(x=>x.id==id); o.status=val; saveAll(); loadDashboard(); renderAllOrders();}
+function previewImages(e){ tempImages=[]; document.getElementById('imgPreview').innerHTML=''; [...e.target.files].forEach(f=>{ let r=new FileReader(); r.onload=()=>{tempImages.push(r.result); document.getElementById('imgPreview').innerHTML+=`<img src="${r.result}">`}; r.readAsDataURL(f); }); }
+function saveProduct(){
+  let name=document.getElementById('p_name').value, price=parseInt(document.getElementById('p_price').value), disc=parseInt(document.getElementById('p_discount').value)||0, cat=document.getElementById('p_cat').value||'products', rating=parseFloat(document.getElementById('p_rating').value)||5, desc=document.getElementById('p_desc').value;
+  if(!name||!price||tempImages.length<1){alert('Name, price and at least 2 photos (you selected '+tempImages.length+') required'); return;}
+  products.push({id:Date.now(),name,price,discount:disc,cat,rating,desc,images:tempImages}); saveAll(); alert('Product added!'); tempImages=[]; document.getElementById('imgPreview').innerHTML=''; renderShop(); renderAdminProds();
+}
+function renderAdminProds(){ document.getElementById('adminProdList').innerHTML=products.map(p=>`<div class="order-card"><span>${p.name} - UGX ${p.price}</span><button onclick="deleteProd(${p.id})">Delete</button></div>`).join(''); }
+function deleteProd(id){ if(confirm('Delete?')){products=products.filter(p=>p.id!=id); saveAll(); renderAdminProds(); renderShop();} }
+function uploadLogo(e){ let r=new FileReader(); r.onload=()=>{document.getElementById('logoImg').src=r.result; localStorage.setItem('lps_logo',r.result)}; r.readAsDataURL(e.target.files[0]); }
+function saveSettings(){ localStorage.setItem('lps_s_name',document.getElementById('s_name').value); localStorage.setItem('lps_s_call',document.getElementById('s_call').value); localStorage.setItem('lps_s_what',document.getElementById('s_what').value); alert('Settings saved! Logo updated.'); document.getElementById('logoText').innerText=document.getElementById('s_name').value; }
+
+// INIT
+(function(){ let lg=localStorage.getItem('lps_logo'); if(lg) document.getElementById('logoImg').src=lg; let sn=localStorage.getItem('lps_s_name'); if(sn) document.getElementById('logoText').innerText=sn; renderShop(); updateAccBtn(); })();
+</script>
+</body>
+</html>
